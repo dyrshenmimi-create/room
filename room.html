@@ -402,69 +402,6 @@ window.addEventListener('resize', () => {
   camera.updateProjectionMatrix();
 });
 
-// ── JOYSTICK ──
-let joyDx = 0, joyDy = 0, joyTouchId = null;
-let lookTouchId = null, lookPrevX = 0, lookPrevY = 0;
-
-const S = 120, K = 50, jR = (S - K) / 2;
-const joy = document.createElement('div');
-joy.style.cssText = `position:fixed;left:24px;bottom:36px;width:${S}px;height:${S}px;border-radius:50%;background:rgba(255,255,255,0.1);border:1.5px solid rgba(255,255,255,0.25);z-index:999;`;
-const knob = document.createElement('div');
-knob.style.cssText = `position:absolute;width:${K}px;height:${K}px;border-radius:50%;background:rgba(255,255,255,0.4);left:${(S-K)/2}px;top:${(S-K)/2}px;pointer-events:none;`;
-joy.appendChild(knob); document.body.appendChild(joy);
-
-function joyReset() {
-  joyDx = 0; joyDy = 0; joyTouchId = null;
-  knob.style.left = (S-K)/2 + 'px';
-  knob.style.top  = (S-K)/2 + 'px';
-}
-
-joy.addEventListener('touchstart', e => {
-  e.preventDefault();
-  if (joyTouchId !== null) return;
-  const t = e.changedTouches[0];
-  joyTouchId = t.identifier;
-}, { passive: false });
-
-document.addEventListener('touchmove', e => {
-  for (const t of e.changedTouches) {
-    if (t.identifier === joyTouchId) {
-      e.preventDefault();
-      const r = joy.getBoundingClientRect();
-      let dx = t.clientX - (r.left + S/2);
-      let dy = t.clientY - (r.top  + S/2);
-      const d = Math.sqrt(dx*dx+dy*dy);
-      if (d > jR) { dx = dx/d*jR; dy = dy/d*jR; }
-      joyDx = dx/jR; joyDy = dy/jR;
-      knob.style.left = ((S-K)/2 + dx) + 'px';
-      knob.style.top  = ((S-K)/2 + dy) + 'px';
-    } else if (t.identifier === lookTouchId) {
-      targetYaw  -= (t.clientX - lookPrevX) * 0.004;
-      targetPitch -= (t.clientY - lookPrevY) * 0.003;
-      targetPitch = Math.max(-0.5, Math.min(0.5, targetPitch));
-      lookPrevX = t.clientX; lookPrevY = t.clientY;
-    }
-  }
-}, { passive: false });
-
-document.addEventListener('touchend', e => {
-  for (const t of e.changedTouches) {
-    if (t.identifier === joyTouchId) joyReset();
-    if (t.identifier === lookTouchId) lookTouchId = null;
-  }
-});
-
-document.addEventListener('touchstart', e => {
-  for (const t of e.changedTouches) {
-    const r = joy.getBoundingClientRect();
-    const inJoy = t.clientX >= r.left && t.clientX <= r.right && t.clientY >= r.top && t.clientY <= r.bottom;
-    if (!inJoy && lookTouchId === null) {
-      lookTouchId = t.identifier;
-      lookPrevX = t.clientX; lookPrevY = t.clientY;
-    }
-  }
-}, { passive: true });
-
 // ── LOOP ──
 const clock = new THREE.Clock();
 function animate() {
@@ -484,8 +421,6 @@ function animate() {
   if (keys['a']||keys['arrowleft'])  camera.position.addScaledVector(right,-speed);
   if (keys['d']||keys['arrowright']) camera.position.addScaledVector(right, speed);
 
-  camera.position.addScaledVector(fwd,  -joyDy * speed);
-  camera.position.addScaledVector(right, joyDx * speed);
 
   camera.position.x = Math.max(-4.4, Math.min(4.4, camera.position.x));
   camera.position.z = Math.max(-5.4, Math.min(5.4, camera.position.z));
