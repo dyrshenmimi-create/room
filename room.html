@@ -125,44 +125,117 @@ const sW=0.7,sH=1.8,sD=0.35,sT=0.025;
 });
 
 // ── DOLLHOUSE ──
-const dhGroup=new THREE.Group();
-dhGroup.rotation.y=Math.PI/4+Math.PI;
-dhGroup.position.set(0.0,0,1.0);
-scene.add(dhGroup);
-const dhWall=new THREE.MeshStandardMaterial({color:0xc9a0e8,roughness:0.85});
-const dhWhite=new THREE.MeshStandardMaterial({color:0xf0eeea,roughness:0.6,metalness:0.1});
-const dhDark=new THREE.MeshStandardMaterial({color:0x1a1020,roughness:0.9});
-const dhRoof=new THREE.MeshStandardMaterial({color:0xe8e4de,roughness:0.75});
-const dhX=0,dhY=-3,dhZ=0,dhW2=1.1*0.6,dhH=1.4*0.6,dhD=0.6*0.6;
-const f1=new THREE.Mesh(new THREE.BoxGeometry(dhW2,dhH/2,dhD),dhWall);f1.position.set(dhX,dhY+dhH/4,dhZ);dhGroup.add(f1);
-const f2=new THREE.Mesh(new THREE.BoxGeometry(dhW2,dhH/2,dhD),dhWall);f2.position.set(dhX,dhY+dhH*3/4,dhZ);dhGroup.add(f2);
-[-dhW2/2,dhW2/2].forEach(x=>{const trim=new THREE.Mesh(new THREE.BoxGeometry(0.045,dhH,0.065),dhWhite);trim.position.set(dhX+x,dhY+dhH/2,dhZ-dhD/2+0.03);dhGroup.add(trim);});
-const divS=new THREE.Mesh(new THREE.BoxGeometry(dhW2+0.01,0.05,dhD+0.01),dhWhite);divS.position.set(dhX,dhY+dhH/2,dhZ);dhGroup.add(divS);
-const baseS=new THREE.Mesh(new THREE.BoxGeometry(dhW2+0.02,0.05,dhD+0.02),dhWhite);baseS.position.set(dhX,dhY+0.025,dhZ);dhGroup.add(baseS);
-const roofH=0.42*0.6,roofW=dhW2/2+0.18;
-[-1,1].forEach(side=>{const panel=new THREE.Mesh(new THREE.BoxGeometry(roofW,0.05,dhD+0.12),dhRoof);panel.position.set(dhX+side*roofW/2*0.5,dhY+dhH+roofH/2-0.05,dhZ);panel.rotation.z=side*-0.42;dhGroup.add(panel);});
-const ridge=new THREE.Mesh(new THREE.BoxGeometry(0.07,0.07,dhD+0.14),dhWhite);ridge.position.set(dhX,dhY+dhH+roofH-0.04,dhZ);dhGroup.add(ridge);
-function dhWin(wx,wy,wz,sw,sh){
-  const g=new THREE.Mesh(new THREE.BoxGeometry(sw,sh,0.03),dhDark);g.position.set(wx,wy,wz);dhGroup.add(g);
-  const fr=new THREE.Mesh(new THREE.BoxGeometry(sw+0.06,sh+0.06,0.025),dhWhite);fr.position.set(wx,wy,wz+0.008);dhGroup.add(fr);
-  const g2=new THREE.Mesh(new THREE.BoxGeometry(sw,sh,0.03),dhDark);g2.position.set(wx,wy,wz+0.018);dhGroup.add(g2);
-  const hb=new THREE.Mesh(new THREE.BoxGeometry(sw,0.02,0.035),dhWhite);hb.position.set(wx,wy,wz+0.022);dhGroup.add(hb);
-  const vb=new THREE.Mesh(new THREE.BoxGeometry(0.02,sh,0.035),dhWhite);vb.position.set(wx,wy,wz+0.022);dhGroup.add(vb);
+// Position: left+back wall corner, facing toward bookshelf (positive Z direction)
+// Size: ~pillow size but taller
+// left wall x=-5, back wall z=-3.5
+// place at x=-4.0, z=-3.0, facing +Z (rotation y=0)
+
+const dhG = new THREE.Group();
+dhG.position.set(-3.2, -3, -2.4);
+dhG.rotation.y = -Math.PI / 2 - Math.PI / 4; // -90 - 45deg
+scene.add(dhG);
+
+const dhPurple = new THREE.MeshStandardMaterial({color:0xc9a0e8, roughness:0.85});
+const dhW2 = new THREE.MeshStandardMaterial({color:0xf0eeea, roughness:0.5, metalness:0.1});
+const dhBlack = new THREE.MeshStandardMaterial({color:0x111018, roughness:0.9});
+const dhRoofMat = new THREE.MeshStandardMaterial({color:0xe8e4de, roughness:0.75});
+
+// dimensions: w=0.7, h=0.9, d=0.55 (short side longer)
+const W=1.0, H=0.9, D=0.55;
+
+// ── BODY ──
+// floor 1
+const b1 = new THREE.Mesh(new THREE.BoxGeometry(W, H/2, D), dhPurple);
+b1.position.set(0, H/4, 0); dhG.add(b1);
+// floor 2
+const b2 = new THREE.Mesh(new THREE.BoxGeometry(W, H/2, D), dhPurple);
+b2.position.set(0, H*3/4, 0); dhG.add(b2);
+// floor divider strip
+const div = new THREE.Mesh(new THREE.BoxGeometry(W+0.02, 0.025, D+0.02), dhW2);
+div.position.set(0, H/2, 0); dhG.add(div);
+// base strip
+const base = new THREE.Mesh(new THREE.BoxGeometry(W+0.02, 0.025, D+0.02), dhW2);
+base.position.set(0, 0.012, 0); dhG.add(base);
+// corner trims (vertical white strips on front face)
+[-W/2, W/2].forEach(x => {
+  const trim = new THREE.Mesh(new THREE.BoxGeometry(0.03, H, 0.035), dhW2);
+  trim.position.set(x, H/2, -D/2); dhG.add(trim);
+});
+
+// ── ROOF (pitched, symmetric) ──
+const rH = 0.3;
+const rW = W/2 + 0.12;
+// left panel
+const roofL = new THREE.Mesh(new THREE.BoxGeometry(rW, 0.04, D+0.14), dhRoofMat);
+roofL.position.set(-rW*0.48, H + rH*0.38, 0);
+roofL.rotation.z = 0.52;
+dhG.add(roofL);
+// right panel
+const roofR = new THREE.Mesh(new THREE.BoxGeometry(rW, 0.04, D+0.14), dhRoofMat);
+roofR.position.set(rW*0.48, H + rH*0.38, 0);
+roofR.rotation.z = -0.52;
+dhG.add(roofR);
+// ridge cap
+const ridge = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, D+0.16), dhW2);
+ridge.position.set(0, H + rH - 0.01, 0); dhG.add(ridge);
+
+// ── FRONT FACE (z = -D/2) ── facing +Z so front is at -D/2
+const FZ = -D/2 - 0.008;
+
+// helper: window - frame + 4 separate dark panes
+function mkWin(x, y, w, h) {
+  const p = 0.012; // divider thickness
+  const g = 0.006; // gap between panes
+  const pW = (w-p)/2 - g;
+  const pH = (h-p)/2 - g;
+  // white frame (outermost)
+  const frame = new THREE.Mesh(new THREE.BoxGeometry(w+0.06, h+0.06, 0.04), dhW2);
+  frame.position.set(x, y, FZ); dhG.add(frame);
+  // 4 dark panes
+  [[-1,1],[ 1,1],[-1,-1],[ 1,-1]].forEach(([sx,sy]) => {
+    const pane = new THREE.Mesh(new THREE.BoxGeometry(pW, pH, 0.042), dhBlack);
+    pane.position.set(x + sx*(pW/2+p/2), y + sy*(pH/2+p/2), FZ+0.001);
+    dhG.add(pane);
+  });
+  // H divider
+  const hbar = new THREE.Mesh(new THREE.BoxGeometry(w, p, 0.044), dhW2);
+  hbar.position.set(x, y, FZ+0.002); dhG.add(hbar);
+  // V divider
+  const vbar = new THREE.Mesh(new THREE.BoxGeometry(p, h, 0.044), dhW2);
+  vbar.position.set(x, y, FZ+0.002); dhG.add(vbar);
 }
-const fz=dhZ-dhD/2-0.01;
-dhWin(dhX-0.18,-2.58,fz,0.11,0.11);dhWin(dhX,-2.58,fz,0.11,0.11);dhWin(dhX+0.18,-2.58,fz,0.11,0.11);
-dhWin(dhX-0.22,-2.79,fz,0.11,0.13);dhWin(dhX+0.22,-2.79,fz,0.11,0.13);
-const dg=new THREE.Mesh(new THREE.BoxGeometry(0.1,0.2,0.035),dhDark);dg.position.set(dhX,-3+0.12,fz);dhGroup.add(dg);
-const df=new THREE.Mesh(new THREE.BoxGeometry(0.15,0.24,0.025),dhWhite);df.position.set(dhX,-3+0.12,fz+0.005);dhGroup.add(df);
 
+// FLOOR 2: two windows
+mkWin(-W*0.22, H*0.78, 0.18, 0.2);
+mkWin( W*0.22, H*0.78, 0.18, 0.2);
 
-// TEST CUBE at dollhouse position
-const testCube = new THREE.Mesh(
-  new THREE.BoxGeometry(0.5,0.5,0.5),
-  new THREE.MeshStandardMaterial({color:0xff0000,emissive:0xff0000,emissiveIntensity:1})
-);
-testCube.position.set(0,-2.5,1.0);
-scene.add(testCube);
+// FLOOR 1 LEFT: arched door
+const dCX=-W*0.2, dCY=H*0.25, dW=0.13, dH2=0.26;
+const dg=new THREE.Mesh(new THREE.BoxGeometry(dW,dH2,0.025),dhBlack);
+dg.position.set(dCX,dCY,FZ); dhG.add(dg);
+const dfr=new THREE.Mesh(new THREE.BoxGeometry(dW+0.055,dH2+0.04,0.02),dhW2);
+dfr.position.set(dCX,dCY,FZ+0.006); dhG.add(dfr);
+const dg2=new THREE.Mesh(new THREE.BoxGeometry(dW,dH2,0.025),dhBlack);
+dg2.position.set(dCX,dCY,FZ+0.014); dhG.add(dg2);
+// arch top
+const archM=new THREE.Mesh(new THREE.CylinderGeometry(0.065,0.065,0.02,10,1,false,0,Math.PI),dhW2);
+archM.rotation.z=Math.PI/2; archM.rotation.y=Math.PI/2;
+archM.position.set(dCX, dCY+dH2/2+0.03, FZ+0.006); dhG.add(archM);
+const archG2=new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.05,0.025,10,1,false,0,Math.PI),dhBlack);
+archG2.rotation.z=Math.PI/2; archG2.rotation.y=Math.PI/2;
+archG2.position.set(dCX, dCY+dH2/2+0.03, FZ+0.016); dhG.add(archG2);
+// door 2x2 grid
+const dhbar = new THREE.Mesh(new THREE.BoxGeometry(dW, 0.025, 0.025), dhW2);
+dhbar.position.set(dCX, dCY, FZ+0.038); dhG.add(dhbar);
+const dvbar = new THREE.Mesh(new THREE.BoxGeometry(0.025, dH2, 0.025), dhW2);
+dvbar.position.set(dCX, dCY, FZ+0.038); dhG.add(dvbar);
+// knob
+const knob=new THREE.Mesh(new THREE.SphereGeometry(0.01,6,6),dhW2);
+knob.position.set(dCX+0.05, dCY, FZ+0.028); dhG.add(knob);
+
+// FLOOR 1 RIGHT: one window
+mkWin(W*0.22, H*0.25, 0.18, 0.2);
+
 // ── BOOKSHELVES ──
 const swMat=new THREE.MeshStandardMaterial({color:0x3d2010,roughness:0.85,metalness:0.02});
 const slMat=new THREE.MeshStandardMaterial({color:0x5c3418,roughness:0.82,metalness:0.02});
@@ -237,10 +310,17 @@ window.addEventListener('mouseup',()=>isDragging=false);
 window.addEventListener('mousemove',e=>{if(!isDragging)return;targetYaw-=(e.clientX-prevX)*0.004;targetPitch-=(e.clientY-prevY)*0.003;targetPitch=Math.max(-0.5,Math.min(0.5,targetPitch));prevX=e.clientX;prevY=e.clientY;});
 window.addEventListener('keydown',e=>keys[e.key.toLowerCase()]=true);
 window.addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
-let lookId=-1,lookPrevX=0,lookPrevY=0;
-canvas.addEventListener('touchstart',e=>{for(const t of e.changedTouches){if(lookId===-1){lookId=t.identifier;lookPrevX=t.clientX;lookPrevY=t.clientY;}}},{passive:true});
-canvas.addEventListener('touchmove',e=>{for(const t of e.changedTouches){if(t.identifier===lookId){targetYaw-=(t.clientX-lookPrevX)*0.004;targetPitch-=(t.clientY-lookPrevY)*0.003;targetPitch=Math.max(-0.5,Math.min(0.5,targetPitch));lookPrevX=t.clientX;lookPrevY=t.clientY;}}},{passive:true});
-canvas.addEventListener('touchend',e=>{for(const t of e.changedTouches)if(t.identifier===lookId)lookId=-1;},{passive:true});
+let lookPrevX=0,lookPrevY=0,lookActive=false;
+canvas.addEventListener('touchstart',e=>{lookActive=true;lookPrevX=e.touches[0].clientX;lookPrevY=e.touches[0].clientY;},{passive:true});
+canvas.addEventListener('touchmove',e=>{
+  if(!lookActive)return;
+  const t=e.touches[0];
+  targetYaw-=(t.clientX-lookPrevX)*0.004;
+  targetPitch-=(t.clientY-lookPrevY)*0.003;
+  targetPitch=Math.max(-0.5,Math.min(0.5,targetPitch));
+  lookPrevX=t.clientX;lookPrevY=t.clientY;
+},{passive:true});
+canvas.addEventListener('touchend',e=>{lookActive=false;},{passive:true});
 
 window.addEventListener('resize',()=>{renderer.setSize(window.innerWidth,window.innerHeight);camera.aspect=window.innerWidth/window.innerHeight;camera.updateProjectionMatrix();});
 
